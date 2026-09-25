@@ -1,0 +1,12 @@
+# mayhem/build.sh deliberately writes EVERY build artifact to $SRC/target/mayhem (the repo-root
+# target/ tree, already ignored by oxc's own .gitignore) so that nothing compiled ever lands under
+# mayhem/. That placement is load-bearing, not cosmetic: the conformance gate content-greps this
+# directory RECURSIVELY for the forbidden __asan/__lsan option-override symbol names, and an
+# ASan-linked Rust binary carries those strings in its own symbol table — a cargo target/ dir left
+# anywhere under mayhem/ hard-FAILs a perfectly clean integration.
+#
+# The entries below are belt-and-braces for anyone who runs cargo by hand inside mayhem/fuzz or
+# mayhem/kat without going through build.sh.
+build-out/
+fuzz/target/
+kat/target/
