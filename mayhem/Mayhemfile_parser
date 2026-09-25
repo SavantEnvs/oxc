@@ -1,0 +1,9 @@
+project: savantenvs/oxc
+target: parser
+testsuite:
+  - https://$MAYHEM_DOMAIN/$MAYHEM_PROJECT/$MAYHEM_TARGET/testsuite.tar
+  - file://mayhem/parser/testsuite
+cmds:
+  - cmd: /mayhem/parser
+    libfuzzer: true
+    timeout: 10

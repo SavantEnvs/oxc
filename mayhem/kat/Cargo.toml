@@ -1,0 +1,34 @@
+# Known-answer-test probe for mayhem/test.sh. Built with NORMAL flags (no sanitizer, no fuzz
+# instrumentation, no DWARF3 anchor): this is a functional oracle, not a triage artifact.
+#
+# It exists because `cargo test` alone is NOT an acceptable oracle (SPEC §6.3): libtest runs every
+# #[test] in one process from one entrypoint, so a process-wide _exit(0) is indistinguishable from
+# "the test binary printed nothing". /mayhem/kat is a separate, small, dynamically linked binary
+# that parses FIXED source text embedded at compile time (no runtime file I/O) and prints exact
+# computed values that mayhem/test.sh compares literally.
+[package]
+name = "oxc-mayhem-kat"
+version = "0.0.0"
+edition = "2021"
+publish = false
+
+[[bin]]
+name = "kat"
+path = "main.rs"
+
+[dependencies.oxc_allocator]
+path = "../../crates/oxc_allocator"
+
+[dependencies.oxc_parser]
+path = "../../crates/oxc_parser"
+
+[dependencies.oxc_span]
+path = "../../crates/oxc_span"
+
+[dependencies.oxc_regular_expression]
+path = "../../crates/oxc_regular_expression"
+
+# Isolated from oxc's root workspace for the same reason as mayhem/fuzz/Cargo.toml — see the
+# comment there.
+[workspace]
+members = ["."]
