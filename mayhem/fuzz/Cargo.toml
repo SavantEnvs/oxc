@@ -1,0 +1,65 @@
+# ADDITIVE cargo-fuzz crate for the Mayhem integration of oxc-project/oxc.
+#
+# Upstream moved its own fuzz/ directory out of this repo in 0236e947bd ("chore: move fuzz/ to
+# https://github.com/oxc-project/oxc-fuzz-parser"), and that standalone repo depends on the
+# PUBLISHED crates (oxc = "0.151.0"). Vendoring it as-is would fuzz a crates.io release instead of
+# the commit this image is built from, which defeats the point of a commit image. So the harness
+# logic below is adapted from oxc-fuzz-parser while every oxc crate is reached by PATH — the code
+# under test is exactly the checkout at /mayhem.
+[package]
+name = "oxc-mayhem-fuzz"
+version = "0.0.0"
+edition = "2021"
+publish = false
+
+[package.metadata]
+cargo-fuzz = true
+
+[dependencies]
+libfuzzer-sys = "0.4"
+
+# The oxc crates under test, reached by PATH — nothing upstream is edited.
+# oxc_parser's default features include `regular_expression`, which is what makes
+# ParseOptions::parse_regular_expression available to the parser target.
+[dependencies.oxc_allocator]
+path = "../../crates/oxc_allocator"
+
+[dependencies.oxc_parser]
+path = "../../crates/oxc_parser"
+
+[dependencies.oxc_span]
+path = "../../crates/oxc_span"
+
+[dependencies.oxc_regular_expression]
+path = "../../crates/oxc_regular_expression"
+
+# Deliberately its OWN workspace root (the table below), even though it lives inside the oxc repo
+# tree. oxc's root Cargo.toml (an upstream file we never edit) is a real workspace
+# (members = ["apps/*", "crates/*", "napi/*", "tasks/*"]) that knows nothing about mayhem/fuzz;
+# without this table cargo walks up, finds that workspace, and fails with "current package believes
+# it's in a workspace when it's not". The path dependencies above still resolve their own
+# `.workspace = true` manifest fields against the oxc workspace, because cargo looks that up from
+# EACH crate's own directory.
+#
+# Being its own workspace also decides where cargo-fuzz writes (mayhem/fuzz/target/) — which is
+# exactly why build.sh overrides CARGO_TARGET_DIR to keep build output out of mayhem/ (see
+# mayhem/.gitignore for why that matters to the gate).
+[workspace]
+members = ["."]
+
+[profile.release]
+debug = 1
+
+[[bin]]
+name = "parser"
+path = "fuzz_targets/parser.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "regex"
+path = "fuzz_targets/regex.rs"
+test = false
+doc = false
+bench = false
